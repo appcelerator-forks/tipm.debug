@@ -1,0 +1,16 @@
+{
+  "name": "debug",
+  "repo": "tipm/debug",
+  "description": "Easy configurable debug output.",
+  "version": "0.0.1",
+  "keywords": [],
+  "dependencies": {
+    "tipm/console": "*"
+  },
+  "development": {},
+  "license": "MIT",
+  "main": "index.js",
+  "scripts": [
+    "index.js"
+  ]
+}
