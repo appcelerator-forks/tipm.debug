@@ -4,6 +4,8 @@
 
 require('tipm-console');
 
+var util = require('tipm-util');
+
 /**
  * Expose `debug()` as the module.
  */
@@ -67,7 +69,7 @@ function debug(name) {
 
     fmt = '  \u001b[9' + c + 'm' + name + ' '
       + '\u001b[3' + c + 'm\u001b[90m'
-      + fmt + '\u001b[3' + c + 'm'
+      + fmt.replace(/(?:\r\n|\n|\r)/g , ('\n\u001b[3' + c + 'm\u001b[90m')) + '\u001b[3' + c + 'm'
       + ' +' + debug.humanize(ms) + '\u001b[0m';
 
     // This hackery is required for IE8
@@ -163,8 +165,7 @@ debug.enabled = function(name) {
  */
 
 function coerce(val) {
-  if (val instanceof Error) { return val.stack || val.message; }
-  return val;
+  return util.format(val);
 }
 
 /**

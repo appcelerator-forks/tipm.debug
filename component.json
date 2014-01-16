@@ -5,7 +5,8 @@
   "version": "0.0.1",
   "keywords": [],
   "dependencies": {
-    "tipm/console": "*"
+    "tipm/console": "*",
+    "tipm/util": "*"
   },
   "development": {},
   "license": "MIT",
