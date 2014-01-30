@@ -2,9 +2,9 @@
 // patch the global console
 // to default strip formatting
 
-require('tipm-console');
+require('console');
 
-var util = require('tipm-util');
+var util = require('util');
 
 /**
  * Expose `debug()` as the module.

@@ -47,18 +47,10 @@ function require(path, parent, orig) {
 require.modules = {};
 
 /**
- * Main definitions.
+ * Registered aliases.
  */
 
-require.mains = {};
-
-/**
- * Define a main.
- */
-
-require.main = function(name, path){
-  require.mains[name] = path;
-};
+require.aliases = {};
 
 /**
  * Resolve `path`.
@@ -75,7 +67,7 @@ require.main = function(name, path){
  */
 
 require.resolve = function(path) {
-  if ('/' == path.charAt(0)) path = path.slice(1);
+  if (path.charAt(0) === '/') path = path.slice(1);
 
   var paths = [
     path,
@@ -85,15 +77,10 @@ require.resolve = function(path) {
     path + '/index.json'
   ];
 
-  if (require.mains[path]) {
-    paths = [path + '/' + require.mains[path]];
-  }
-
-  for (var i = 0, len = paths.length; i < len; i++) {
+  for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (require.modules.hasOwnProperty(path)) {
-      return path;
-    }
+    if (require.modules.hasOwnProperty(path)) return path;
+    if (require.aliases.hasOwnProperty(path)) return require.aliases[path];
   }
 };
 
@@ -114,7 +101,7 @@ require.normalize = function(curr, path) {
   curr = curr.split('/');
   path = path.split('/');
 
-  for (var i = 0, len = path.length; i < len; ++i) {
+  for (var i = 0; i < path.length; ++i) {
     if ('..' == path[i]) {
       curr.pop();
     } else if ('.' != path[i] && '' != path[i]) {
@@ -138,6 +125,21 @@ require.register = function(path, definition) {
 };
 
 /**
+ * Alias a module definition.
+ *
+ * @param {String} from
+ * @param {String} to
+ * @api private
+ */
+
+require.alias = function(from, to) {
+  if (!require.modules.hasOwnProperty(from)) {
+    throw new Error('Failed to alias "' + from + '", it does not exist');
+  }
+  require.aliases[to] = from;
+};
+
+/**
  * Return a require function relative to the `parent` path.
  *
  * @param {String} parent
@@ -146,7 +148,7 @@ require.register = function(path, definition) {
  */
 
 require.relative = function(parent) {
-  var root = require.normalize(parent, '..');
+  var p = require.normalize(parent, '..');
 
   /**
    * lastIndexOf helper.
@@ -176,7 +178,15 @@ require.relative = function(parent) {
   localRequire.resolve = function(path) {
     var c = path.charAt(0);
     if ('/' == c) return path.slice(1);
-    if ('.' == c) return require.normalize(root, path);
+    if ('.' == c) return require.normalize(p, path);
+
+    // resolve deps by returning
+    // the dep in the nearest "deps"
+    // directory
+    var segs = parent.split('/');
+    var i = lastIndexOf(segs, 'deps') + 1;
+    if (!i) i = 0;
+    path = segs.slice(0, i + 1).join('/') + '/deps/' + path;
     return path;
   };
 
@@ -263,8 +273,13 @@ globalCtx.console.warn = function(){
  */
 
 function unFormat(rawArgs){
-  var args  = Array.prototype.slice.call(rawArgs,0);
-  args[0] = reset + (args[0] || '').toString().split(/(?:\r\n|\n|\r)/).join('\n' + reset);
+  var delim = '<<DELIM>>';
+  var args  = (Array.prototype.slice.call(rawArgs,0)).join(delim);
+
+  args = (reset + args)
+    .split(/(?:\r\n|\n|\r)/)
+    .join('\n' + reset)
+    .split(delim);
   return args;
 }
 
@@ -664,9 +679,9 @@ require.register("debug/index.js", function(exports, require, module){
 // patch the global console
 // to default strip formatting
 
-require("tipm-console");
+require('console');
 
-var util = require("tipm-util");
+var util = require('util');
 
 /**
  * Expose `debug()` as the module.
@@ -851,10 +866,19 @@ function coerce(val) {
 
 
 
-if (typeof exports == "object") {
+
+require.alias("tipm-console/index.js", "debug/deps/console/index.js");
+require.alias("tipm-console/index.js", "debug/deps/console/index.js");
+require.alias("tipm-console/index.js", "console/index.js");
+require.alias("tipm-console/index.js", "tipm-console/index.js");
+require.alias("tipm-util/index.js", "debug/deps/util/index.js");
+require.alias("tipm-util/index.js", "debug/deps/util/index.js");
+require.alias("tipm-util/index.js", "util/index.js");
+require.alias("tipm-util/index.js", "tipm-util/index.js");
+require.alias("debug/index.js", "debug/index.js");if (typeof exports == "object") {
   module.exports = require("debug");
 } else if (typeof define == "function" && define.amd) {
-  define(function(){ return require("debug"); });
+  define([], function(){ return require("debug"); });
 } else {
   this["debug"] = require("debug");
 }})();
